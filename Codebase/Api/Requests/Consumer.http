@@ -1,0 +1,36 @@
+@LocalHostAddress = https://localhost:7036
+@ContainerHostAddress = http://localhost:8080
+@HostAddress = {{ContainerHostAddress}}
+
+# Credentials as Base64 use the format "{user}:{secret}"
+@ReaderUser = reader-user@email.com
+@ReaderSecret = reader-secret
+@ReaderCredentialsAsBase64 = cmVhZGVyLXVzZXJAZW1haWwuY29tOnJlYWRlci1zZWNyZXQ=
+
+@AdminUser = admin-user@email.com
+@AdminSecret = admin-secret
+@AdminCredentialsAsBase64 = YWRtaW4tdXNlckBlbWFpbC5jb206YWRtaW4tc2VjcmV0
+
+@CmsUser = cms-webhook
+@CmsSecret = d1c47968-8c80-41de-97df-9c7e3ffb4bb1
+@CmsCredentialsAsBase64 = Y21zLXdlYmhvb2s6ZDFjNDc5NjgtOGM4MC00MWRlLTk3ZGYtOWM3ZTNmZmI0YmIx
+
+### A regular user listing events
+
+GET {{HostAddress}}/consumers/cms/events
+Authorization: Basic {{ReaderCredentialsAsBase64}}
+
+### An admin listing events
+
+GET {{HostAddress}}/consumers/cms/events
+Authorization: Basic {{AdminCredentialsAsBase64}}
+
+### The CMS trying to list events
+
+GET {{HostAddress}}/consumers/cms/events
+Authorization: Basic {{CmsCredentialsAsBase64}}
+
+### An admin disabling an event
+
+DELETE {{HostAddress}}/consumers/cms/events/Y
+Authorization: Basic {{AdminCredentialsAsBase64}}

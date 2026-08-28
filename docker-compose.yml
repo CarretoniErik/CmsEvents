@@ -1,0 +1,88 @@
+name: cms-events
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cms_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-cms_events}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cms_app} -d ${POSTGRES_DB:-cms_events}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    image: cms-events-api:latest
+    build:
+      context: .
+      dockerfile: Codebase/Api/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__PostgreSQL: "Host=db;Port=5432;Database=${POSTGRES_DB:-cms_events};Username=${POSTGRES_USER:-cms_app};Password=${POSTGRES_PASSWORD:-dev_password}"
+
+      # Demo credentials — WITH defaults, so `docker compose up` just works.
+      # Override via a .env file if desired, but not required.
+      Auth__Cms__Username:   ${AUTH_CMS_USERNAME:-cms-webhook}
+      Auth__Cms__Password:   ${AUTH_CMS_PASSWORD:-d1c47968-8c80-41de-97df-9c7e3ffb4bb1}
+      Auth__User__Username:  ${AUTH_USER_USERNAME:-reader-user@email.com}
+      Auth__User__Password:  ${AUTH_USER_PASSWORD:-reader-secret}
+      Auth__Admin__Username: ${AUTH_ADMIN_USERNAME:-admin-user@email.com}
+      Auth__Admin__Password: ${AUTH_ADMIN_PASSWORD:-admin-secret}
+
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  test-api:
+    image: cms-events-api:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Testing
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__PostgreSQL: "Host=db;Port=5432;Database=${TEST_DATABASE_NAME:-cms_events_tests};Username=${POSTGRES_USER:-cms_app};Password=${POSTGRES_PASSWORD:-dev_password}"
+
+      Auth__Cms__Username: ${AUTH_CMS_USERNAME:-cms-webhook}
+      Auth__Cms__Password: ${AUTH_CMS_PASSWORD:-d1c47968-8c80-41de-97df-9c7e3ffb4bb1}
+      Auth__User__Username: ${AUTH_USER_USERNAME:-reader-user@email.com}
+      Auth__User__Password: ${AUTH_USER_PASSWORD:-reader-secret}
+      Auth__Admin__Username: ${AUTH_ADMIN_USERNAME:-admin-user@email.com}
+      Auth__Admin__Password: ${AUTH_ADMIN_PASSWORD:-admin-secret}
+
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  tests:
+    image: cms-events-tests:latest
+    build:
+      context: .
+      dockerfile: Tests/IntegrationTests/Dockerfile
+    depends_on:
+      test-api:
+        condition: service_healthy
+    environment:
+      API_BASE_URL: http://test-api:8080
+      TEST_DATABASE_CONNECTION_STRING: "Host=db;Port=5432;Database=${TEST_DATABASE_NAME:-cms_events_tests};Username=${POSTGRES_USER:-cms_app};Password=${POSTGRES_PASSWORD:-dev_password}"                                       
+volumes:
+  pgdata:

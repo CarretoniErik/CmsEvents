@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/Codebase/">
+    <Project Path="Codebase/Api/CmsEvents.Api.csproj" />
+    <Project Path="Codebase/Application/CmsEvents.Application.csproj" Id="8fb2757b-e285-4447-9654-3cb9f2dffc31" />
+    <Project Path="Codebase/Domain/CmsEvents.Domain.csproj" Id="92144bcc-a52b-4302-822d-ee1656e7b43f" />
+    <Project Path="Codebase/Infrastructure/CmsEvents.Infrastructure.csproj" Id="455704c1-f7a2-4ea0-b290-222ed39ba6ab" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".dockerignore" />
+    <File Path="docker-compose.yml" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/IntegrationTests/CmsEvents.IntegrationTests.csproj" Id="74e877b9-d509-42ae-9a24-b87e99ffd637" />
+    <Project Path="Tests/UnitTests/CmsEvents.UnitTests.csproj" Id="7a7e267f-17e1-4bf3-9d20-a6da85234bbf" />
+  </Folder>
+</Solution>

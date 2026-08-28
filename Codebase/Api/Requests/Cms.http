@@ -1,0 +1,47 @@
+﻿@LocalHostAddress = https://localhost:7036
+@ContainerHostAddress = http://localhost:8080
+@HostAddress = {{ContainerHostAddress}}
+
+# Credentials as Base64 use the format "{user}:{secret}"
+@CmsUser = cms-webhook
+@CmsSecret = d1c47968-8c80-41de-97df-9c7e3ffb4bb1
+@CmsCredentialsAsBase64 = Y21zLXdlYmhvb2s6ZDFjNDc5NjgtOGM4MC00MWRlLTk3ZGYtOWM3ZTNmZmI0YmIx
+
+### The CMS publishing events
+
+POST {{HostAddress}}/cms/events
+Authorization: Basic {{CmsCredentialsAsBase64}}
+Content-Type: application/json
+
+[
+  {
+    "type": "publish",
+    "id": "X",
+    "payload": {
+      "name": "Erik",
+      "surname": "Carretoni"
+    },
+    "version": 2,
+    "timestamp": "2026-08-22T15:00:00Z"
+  },
+  {
+    "type": "publish",
+    "id": "X",
+    "payload": {
+      "name": "Erik",
+      "surname": "Guimarães Carretoni"
+    },
+    "version": 3,
+    "timestamp": "2026-08-22T15:00:00Z"
+  },
+  {
+    "type": "publish",
+    "id": "A",
+    "payload": {
+      "name": "Erik",
+      "surname": "Carretoni"
+    },
+    "version": 1,
+    "timestamp": "2026-08-22T15:00:00Z"
+  }
+]
