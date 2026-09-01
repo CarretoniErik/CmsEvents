@@ -1,5 +1,6 @@
 ﻿using CmsEvents.Application.Persistence;
 using CmsEvents.Application.Persistence.Abstractions;
+using CmsEvents.Infrastructure.Persistence;
 using CmsEvents.Infrastructure.Persistence.DbContext;
 using CmsEvents.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<WriteDbContext>());
         services.AddScoped<ICmsEntityReadRepository, CmsEntityReadRepository>();
         services.AddScoped<ICmsEntityWriteRepository, CmsEntityWriteRepository>();
+        services.AddScoped<IConcurrencyConflictHandler, ConcurrencyConflictHandler>();
 
         return services;
     }

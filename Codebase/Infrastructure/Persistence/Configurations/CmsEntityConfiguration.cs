@@ -1,6 +1,7 @@
 ﻿using CmsEvents.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Text.Json;
 
 namespace CmsEvents.Infrastructure.Persistence.Configurations;
 
@@ -18,13 +19,19 @@ public sealed class CmsEntityConfiguration : IEntityTypeConfiguration<CmsEntity>
 
         builder.Property(e => e.Version)
                .HasColumnName("version")
-               .IsRequired();
+               .IsRequired()
+               .IsConcurrencyToken();
 
         // Store the open payload as jsonb (queryable/indexable in Postgres)
         builder.Property(e => e.Payload)
                .HasColumnName("payload")
                .HasColumnType("jsonb")
-               .IsRequired();
+               .IsRequired()
+               .HasConversion
+               (
+                   v => v.RootElement.GetRawText(),
+                   v => JsonDocument.Parse(v)
+               );
 
         builder.Property(e => e.CmsTimestamp)
                .HasColumnName("cms_timestamp")

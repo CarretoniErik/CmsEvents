@@ -13,7 +13,8 @@ public sealed class ProcessCmsEventsUseCase
     ICmsEventSanitizer sanitizer,
     IValidator<ProcessCmsEventsInput> validator,
     ICmsEntityWriteRepository writeRepository,
-    IUnitOfWork unitOfWork
+    IUnitOfWork unitOfWork,
+    IConcurrencyConflictHandler concurrencyHandler
 ) : IProcessCmsEventsUseCase
 {
     public async Task<ProcessBatchResult> ProcessBatchAsync(IReadOnlyList<ProcessCmsEventsInput> inputs, CancellationToken cancellationToken)
@@ -44,7 +45,7 @@ public sealed class ProcessCmsEventsUseCase
                 var outcome = await ProcessSingleAsync(winner, cancellationToken);
                 result.Register(outcome);
                 logger.LogInformation("Processed CMS event. Type={Type} Id={Id} Version={Version} Outcome={Outcome}", winner.Type, winner.Id, winner.Version, outcome);
-            }
+            }            
             catch (Exception ex)
             {
                 // Resilient batch - one bad event does not abort the others
@@ -80,13 +81,25 @@ public sealed class ProcessCmsEventsUseCase
             return EventOutcome.Failed;
         }
 
-        return sanitized.Type switch
+        try
         {
-            CmsEventTypes.Publish => await HandlePublishAsync(sanitized, cancellationToken),
-            CmsEventTypes.Unpublish => await HandleUnpublishAsync(sanitized, cancellationToken),
-            CmsEventTypes.Delete => await HandleDeleteAsync(sanitized, cancellationToken),
-            _ => HandleUnknown(sanitized),
-        };
+            return await concurrencyHandler.ResolveConflictAsync
+            (
+                async () => sanitized.Type switch
+                {
+                    CmsEventTypes.Publish => await HandlePublishAsync(sanitized, cancellationToken),
+                    CmsEventTypes.Unpublish => await HandleUnpublishAsync(sanitized, cancellationToken),
+                    CmsEventTypes.Delete => await HandleDeleteAsync(sanitized, cancellationToken),
+                    _ => HandleUnknown(sanitized),
+                },
+                cancellationToken
+            );
+        }
+        catch (ApplicationException ex)
+        {
+            logger.LogWarning(ex, "Concurrency conflict for {Id} after retries. Event ignored.", input.Id);
+            return EventOutcome.Ignored;
+        }
     }
 
     private async Task<EventOutcome> HandlePublishAsync(ProcessCmsEventsInput input, CancellationToken cancellationToken)

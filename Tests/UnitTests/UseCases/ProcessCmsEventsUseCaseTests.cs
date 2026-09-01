@@ -457,7 +457,8 @@ public sealed class ProcessCmsEventsUseCaseTests
             new FakeCmsEventSanitizer(),
             new AcceptAllValidator(),
             repository,
-            unitOfWork
+            unitOfWork,
+            new FakeConcurrencyConflictHandler()
         );
     }
 
