@@ -10,4 +10,5 @@ public sealed class WriteDbContext(DbContextOptions<WriteDbContext> options) : M
     public DbSet<CmsEntity> CmsEntities => Set<CmsEntity>();
     protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.ApplyConfiguration(new CmsEntityConfiguration());
     Task<int> IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken) => SaveChangesAsync(cancellationToken);
+    public void Detach(object entity) => Entry(entity).State = EntityState.Detached;
 }

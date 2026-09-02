@@ -14,8 +14,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
         var timestamp = DateTimeOffset.UtcNow;
         var payload = CreatePayload();
         var events = new[]
@@ -36,7 +35,6 @@ public sealed class ProcessCmsEventsUseCaseTests
         entity.Version.Should().Be(1);
         entity.IsUnpublishedByCms.Should().BeFalse();
         entity.IsVisibleToUsers.Should().BeTrue();
-        unitOfWork.SaveChangesCallCount.Should().Be(1);
     }
 
     [Fact]
@@ -44,8 +42,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
         var entity = CreateEntity(id: "event-1", version: 1, timestamp: DateTimeOffset.UtcNow.AddMinutes(-1));
         repository.Entities["event-1"] = entity;
         var events = new[]
@@ -70,8 +67,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
         var entity = CreateEntity(id: "event-1", version: 5, timestamp: DateTimeOffset.UtcNow.AddMinutes(-1));
         repository.Entities["event-1"] = entity;
 
@@ -96,8 +92,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
         var entity = CreateEntity(id: "event-1", version: 1, timestamp: DateTimeOffset.UtcNow.AddMinutes(-1));
         repository.Entities["event-1"] = entity;
 
@@ -124,8 +119,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
         repository.Entities["event-1"] = CreateEntity(id: "event-1", version: 1, timestamp: DateTimeOffset.UtcNow);
 
         // Act
@@ -151,8 +145,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
 
         // Act
         var result = await sut.ProcessBatchAsync
@@ -177,8 +170,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
         var timestamp = DateTimeOffset.UtcNow;
         var events = new[]
         {
@@ -205,8 +197,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository { FailureId = "event-fails" };
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
         var events = new[]
         {
             new ProcessCmsEventsInput("publish", "event-fails", CreatePayload("bad"), 1, DateTimeOffset.UtcNow),
@@ -222,7 +213,6 @@ public sealed class ProcessCmsEventsUseCaseTests
         result.Ignored.Should().Be(0);
         repository.Added.Should().ContainSingle();
         repository.Added.Single().Id.Should().Be("event-succeeds");
-        unitOfWork.SaveChangesCallCount.Should().Be(1);
     }
 
     [Fact]
@@ -230,8 +220,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
         var entity = CreateEntity(id: "event-1", version: 5, timestamp: DateTimeOffset.UtcNow.AddMinutes(-1));
         repository.Entities["event-1"] = entity;
 
@@ -263,8 +252,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
         var entity = CreateEntity(id: "event-1", version: 5, timestamp: DateTimeOffset.UtcNow.AddMinutes(-1));
         repository.Entities["event-1"] = entity;
 
@@ -298,8 +286,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
         var entity = CreateEntity(id: "event-1", version: 5, timestamp: DateTimeOffset.UtcNow);
         repository.Entities["event-1"] = entity;
 
@@ -332,8 +319,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
 
         // Act
         var result = await sut.ProcessBatchAsync
@@ -373,8 +359,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
 
         var entity = CreateEntity(id: "event-1", version: 2, timestamp: DateTimeOffset.UtcNow.AddMinutes(-1));
         entity.TryApplyUnpublish(2, CreatePayloadDocument("unpublished"), DateTimeOffset.UtcNow.AddMinutes(-1));
@@ -410,8 +395,7 @@ public sealed class ProcessCmsEventsUseCaseTests
     {
         // Arrange
         var repository = new FakeCmsEntityWriteRepository();
-        var unitOfWork = new FakeUnitOfWork();
-        var sut = CreateSut(repository, unitOfWork);
+        var sut = CreateSut(repository);
         var timestamp = DateTimeOffset.UtcNow;
         var events = new[]
         {
@@ -449,7 +433,7 @@ public sealed class ProcessCmsEventsUseCaseTests
             .Be("version-2");
     }
 
-    private static ProcessCmsEventsUseCase CreateSut(FakeCmsEntityWriteRepository repository, FakeUnitOfWork unitOfWork)
+    private static ProcessCmsEventsUseCase CreateSut(FakeCmsEntityWriteRepository repository)
     {
         return new ProcessCmsEventsUseCase
         (
@@ -457,7 +441,6 @@ public sealed class ProcessCmsEventsUseCaseTests
             new FakeCmsEventSanitizer(),
             new AcceptAllValidator(),
             repository,
-            unitOfWork,
             new FakeConcurrencyConflictHandler()
         );
     }

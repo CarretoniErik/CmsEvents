@@ -1,10 +1,12 @@
-﻿using CmsEvents.Application.Persistence.Abstractions;
+﻿using CmsEvents.Application.Persistence;
+using CmsEvents.Application.Persistence.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace CmsEvents.Infrastructure.Persistence;
 
-public sealed class ConcurrencyConflictHandler(ILogger<ConcurrencyConflictHandler> logger) : IConcurrencyConflictHandler
+public sealed class ConcurrencyConflictHandler(IUnitOfWork unitOfWork, ILogger<ConcurrencyConflictHandler> logger) : IConcurrencyConflictHandler
 {
     private const int MaxRetries = 3;
 
@@ -14,10 +16,14 @@ public sealed class ConcurrencyConflictHandler(ILogger<ConcurrencyConflictHandle
         {
             try
             {
-                return await operation();
+                var result = await operation();
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+                return result;
             }
             catch (DbUpdateConcurrencyException ex)
             {
+                foreach (var entry in ex.Entries) unitOfWork.Detach(entry.Entity);
+
                 if (attempt == MaxRetries - 1)
                 {
                     logger.LogWarning(ex, "Concurrency conflict after {MaxRetries} retries", MaxRetries);
@@ -29,6 +35,6 @@ public sealed class ConcurrencyConflictHandler(ILogger<ConcurrencyConflictHandle
             }
         }
 
-        return default!;
+        throw new UnreachableException();
     }
 }

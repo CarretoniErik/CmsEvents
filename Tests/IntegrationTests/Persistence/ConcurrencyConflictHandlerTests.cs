@@ -7,6 +7,7 @@ using CmsEvents.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace CmsEvents.IntegrationTests.Persistence;
@@ -37,9 +38,10 @@ public sealed class ConcurrencyConflictHandlerTests : IAsyncLifetime
         var loggerFactory = LoggerFactory.Create(builder => builder.AddDebug());
         _logger = loggerFactory.CreateLogger<ConcurrencyConflictHandler>();
 
-        _handler = new ConcurrencyConflictHandler(_logger);
-        _writeRepository = new CmsEntityWriteRepository(_dbContext);
         _unitOfWork = _dbContext;
+        _handler = new ConcurrencyConflictHandler(_unitOfWork, _logger);
+        _writeRepository = new CmsEntityWriteRepository(_dbContext);
+
     }
 
     public async Task DisposeAsync()
@@ -67,7 +69,7 @@ public sealed class ConcurrencyConflictHandlerTests : IAsyncLifetime
 
         var firstUpdateTask = Task.Run(async () =>
         {
-            var conflictHandlerForFirstTask = new ConcurrencyConflictHandler(_logger);
+            var conflictHandlerForFirstTask = new ConcurrencyConflictHandler(_unitOfWork, _logger);
             return await conflictHandlerForFirstTask.ResolveConflictAsync(async () =>
             {
                 var e = await _writeRepository.GetByIdForUpdateAsync(entityId, CancellationToken.None);
@@ -81,7 +83,7 @@ public sealed class ConcurrencyConflictHandlerTests : IAsyncLifetime
             // Small delay to ensure first commit already happened
             await Task.Delay(50);
 
-            var conflictHandlerForSecondTask = new ConcurrencyConflictHandler(_logger);
+            var conflictHandlerForSecondTask = new ConcurrencyConflictHandler(_unitOfWork, _logger);
             return await conflictHandlerForSecondTask.ResolveConflictAsync(async () =>
             {
                 var e = await _writeRepository.GetByIdForUpdateAsync(entityId, CancellationToken.None);
@@ -209,7 +211,7 @@ public sealed class ConcurrencyConflictHandlerTests : IAsyncLifetime
                 }
             }
 
-            return default!;
+            throw new UnreachableException();
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using CmsEvents.Application.Persistence;
-using CmsEvents.Application.Persistence.Abstractions;
+﻿using CmsEvents.Application.Persistence.Abstractions;
 using CmsEvents.Domain.Entities;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
@@ -13,7 +12,6 @@ public sealed class ProcessCmsEventsUseCase
     ICmsEventSanitizer sanitizer,
     IValidator<ProcessCmsEventsInput> validator,
     ICmsEntityWriteRepository writeRepository,
-    IUnitOfWork unitOfWork,
     IConcurrencyConflictHandler concurrencyHandler
 ) : IProcessCmsEventsUseCase
 {
@@ -53,9 +51,6 @@ public sealed class ProcessCmsEventsUseCase
                 logger.LogError(ex, "Failed to process CMS event. Type={Type} Id={Id} Version={Version}", winner.Type, winner.Id, winner.Version);
             }
         }
-
-        // Persist all accepted changes in a single transaction
-        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("CMS batch processed. Total={Total} Applied={Applied} Ignored={Ignored} Deleted={Deleted} Failed={Failed}",
             inputs.Count, result.Applied, result.Ignored, result.Deleted, result.Failed);
